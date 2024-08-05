@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>直播-主播端</title>
+    <script type="text/javascript" src="js/jquery-1.12.2.min.js"></script>
+    <script type="text/javascript" src="js/srs.sdk.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="form-inline">
+        URL:
+        <input type="text" id="txt_url" class="input-xxlarge" value="">
+        <button class="btn btn-primary" id="btn_publish">开始推流</button>
+    </div>
+
+    <label></label>
+    <video id="rtc_media_player" width="320" autoplay muted></video>
+
+    <label></label>
+    SessionID: <span id='sessionid'></span>
+
+    <label></label>
+    Audio: <span id='acodecs'></span><br/>
+    Video: <span id='vcodecs'></span>
+
+    <label></label>
+    Simulator: <a href='#' id='simulator-drop'>Drop</a>
+
+    <footer>
+        <p></p>
+        <p><a href="https://github.com/ossrs/srs">SRS Team &copy; 2020</a></p>
+    </footer>
+</div>
+    <script type="text/javascript">
+        let sdk = null; // Global handler to do cleanup when republishing.
+        let startPublish = function () {
+        $('#rtc_media_player').show();
+
+        // Close PC when user replay.
+        if (sdk) {
+            sdk.close();
+        }
+        sdk = new SrsRtcPublisherAsync();
+
+        // User should set the stream when publish is done, @see https://webrtc.org/getting-started/media-devices
+        // However SRS SDK provides a consist API like https://webrtc.org/getting-started/remote-streams
+        // 设置流
+        $('#rtc_media_player').prop('srcObject', sdk.stream);
+        // Optional callback, SDK will add track to stream.
+        // sdk.ontrack = function (event) { console.log('Got track', event); sdk.stream.addTrack(event.track); };
+
+        // ice 连接事件, 当 ICE 收集状态（即 ICE 代理是否正在主动收集候选项）发生更改时，会发生这种情况。
+        sdk.pc.onicegatheringstatechange = function (event) {
+            if (sdk.pc.iceGatheringState === "complete") {
+                $('#acodecs').html(SrsRtcFormatSenders(sdk.pc.getSenders(), "audio"));
+                $('#vcodecs').html(SrsRtcFormatSenders(sdk.pc.getSenders(), "video"));
+            }
+        };
+
+        // 示例 webrtc://192.168.91.130/live/livestream
+        let url = $("#txt_url").val();
+
+        // 开始推流
+        sdk.publish(url).then(function (session) {
+            $('#sessionid').html(session.sessionid);
+            $('#simulator-drop').attr('href', session.simulator + '?drop=1&username=' + session.sessionid);
+        }).catch(function (reason) {
+            // Throw by sdk.
+            if (reason instanceof SrsError) {
+                if (reason.name === 'HttpsRequiredError') {
+                    alert(`WebRTC推流必须是HTTPS或者localhost：${reason.name} ${reason.message}`);
+                } else {
+                    alert(`${reason.name} ${reason.message}`);
+                }
+            }
+            if (reason instanceof DOMException) {
+                if (reason.name === 'NotFoundError') {
+                    alert(`找不到麦克风和摄像头设备：getUserMedia ${reason.name} ${reason.message}`);
+                } else if (reason.name === 'NotAllowedError') {
+                    alert(`你禁止了网页访问摄像头和麦克风：getUserMedia ${reason.name} ${reason.message}`);
+                } else if (['AbortError', 'NotAllowedError', 'NotFoundError', 'NotReadableError', 'OverconstrainedError', 'SecurityError', 'TypeError'].includes(reason.name)) {
+                    alert(`getUserMedia ${reason.name} ${reason.message}`);
+                }
+            }
+
+            sdk.close();
+            $('#rtc_media_player').hide();
+            console.error(reason);
+        });
+        };
+
+        $('#rtc_media_player').hide();
+        $("#txt_url").val('webrtc://192.168.1.103/live/livestream');
+        $("#btn_publish").click(startPublish);
+    </script>
+</body>
+</html>
