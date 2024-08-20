@@ -2,6 +2,7 @@
 # srs控制后台端口
 # sudo ufw allow from any to any port 8080 proto tcp
 sudo ufw allow from any to any port 8085 proto tcp
+sudo ufw allow from any to any port 8088 proto tcp
 # RTMP端口
 sudo ufw allow from any to any port 1935 proto tcp
 # RTMPS端口
@@ -12,6 +13,7 @@ sudo ufw allow from any to any port 843 proto tcp
 sudo ufw allow from any to any port 443 proto tcp
 # Http API端口
 sudo ufw allow from any to any port 1985 proto tcp
+sudo ufw allow from any to any port 1988 proto tcp
 # RTC端口
 sudo ufw allow from any to any port 8000 proto tcp
 sudo ufw allow from any to any port 8000 proto udp

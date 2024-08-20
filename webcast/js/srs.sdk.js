@@ -22,11 +22,11 @@ function SrsRtcPublisherAsync() {
 
     // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
     self.contrains = {
-        audio: true,
+        audio: false,
         video: {
-            width: 1280,
-            height: 720,
-            frameRate: 15
+            width: 1920,
+            height: 1080,
+            frameRate: 25
         }
     };
 
